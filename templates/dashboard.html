@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Dashboard</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family: Arial, sans-serif;
+            background:#0f172a;
+            color:white;
+            transition:0.5s;
+        }
+
+        /* NORMAL */
+        body.normal-theme{
+            background:#0f172a;
+        }
+
+        /* PROTANOPIA */
+        body.protanopia-theme{
+            background:#102a43;
+        }
+
+        body.protanopia-theme .card{
+            background:#1e3a5f;
+            border-left:5px solid #facc15;
+        }
+
+        body.protanopia-theme button{
+            background:#facc15;
+            color:black;
+        }
+
+        /* DEUTERANOPIA */
+        body.deuteranopia-theme{
+            background:#1f2933;
+        }
+
+        body.deuteranopia-theme .card{
+            background:#263238;
+            border-left:5px solid #38bdf8;
+        }
+
+        body.deuteranopia-theme button{
+            background:#38bdf8;
+            color:black;
+        }
+
+        /* TRITANOPIA */
+        body.tritanopia-theme{
+            background:#2d1b4e;
+        }
+
+        body.tritanopia-theme .card{
+            background:#3b2f63;
+            border-left:5px solid #f97316;
+        }
+
+        body.tritanopia-theme button{
+            background:#f97316;
+            color:white;
+        }
+
+        header{
+            background:#111827;
+            padding:20px 40px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-bottom:2px solid #1e293b;
+        }
+
+        header h2{
+            color:#38bdf8;
+        }
+
+        header a{
+            color:#f87171;
+            text-decoration:none;
+            font-weight:bold;
+        }
+
+        .container{
+            width:90%;
+            margin:auto;
+            margin-top:30px;
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:25px;
+        }
+
+        .card{
+            background:#1e293b;
+            padding:25px;
+            border-radius:18px;
+            box-shadow:0 8px 20px rgba(0,0,0,0.3);
+            transition:0.3s;
+        }
+
+        .card:hover{
+            transform:translateY(-3px);
+        }
+
+        .card h3{
+            margin-bottom:20px;
+            color:#38bdf8;
+        }
+
+        button{
+            padding:12px 18px;
+            border:none;
+            border-radius:10px;
+            background:#38bdf8;
+            color:white;
+            cursor:pointer;
+            font-weight:bold;
+            margin-top:10px;
+        }
+
+        button:hover{
+            opacity:0.9;
+        }
+
+        select,
+        input[type="file"]{
+            margin-top:10px;
+            padding:10px;
+            border-radius:8px;
+            border:none;
+            width:100%;
+        }
+
+        .result{
+            background:#0f172a;
+            padding:15px;
+            border-radius:10px;
+            margin-top:15px;
+            color:#4ade80;
+            font-size:18px;
+            white-space:pre-line;
+        }
+
+        video,
+        img{
+            width:100%;
+            border-radius:12px;
+            margin-top:15px;
+        }
+
+        #cameraBox{
+            position:relative;
+            width:100%;
+        }
+
+        #overlay{
+            position:absolute;
+            top:0;
+            left:0;
+            pointer-events:none;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-top:15px;
+        }
+
+        table th{
+            background:#38bdf8;
+            color:white;
+            padding:12px;
+        }
+
+        table td{
+            padding:12px;
+            background:#0f172a;
+            border-bottom:1px solid #1e293b;
+            text-align:center;
+        }
+
+        .full{
+            margin-top:25px;
+        }
+
+        .warning{
+            color:#f87171;
+            margin-top:10px;
+        }
+
+        @media(max-width:900px){
+
+            .grid{
+                grid-template-columns:1fr;
+            }
+
+        }
+/* LARGE TEXT MODE */
+.large-text {
+    font-size: 22px;
+}
+
+.large-text h2,
+.large-text h3,
+.large-text p,
+.large-text td,
+.large-text th,
+.large-text button,
+.large-text select,
+.large-text input {
+    font-size: 22px !important;
+}
+    </style>
+</head>
+
+<body class="
+{% if session.get('vision_type') == 'Protanopia' %}
+protanopia-theme
+{% elif session.get('vision_type') == 'Deuteranopia' %}
+deuteranopia-theme
+{% elif session.get('vision_type') == 'Tritanopia' %}
+tritanopia-theme
+{% else %}
+normal-theme
+{% endif %}
+">
+
+<header>
+
+    <h2>🎨 AI Color & Object Accessibility</h2>
+
+    <div>
+        👤 {{ user }}
+        |
+        <a href="/logout">Logout</a>
+    </div>
+
+</header>
+
+<div class="container">
+
+    <div class="grid">
+
+        <!-- Vision -->
+        <div class="card">
+
+            <h3>👁 Vision Type</h3>
+
+            <p>
+                Current:
+                <strong>{{ session.get('vision_type', 'Not Tested') }}</strong>
+            </p>
+
+            {% if session.get('vision_type') != 'Normal' %}
+                <p class="warning">
+                    Accessibility Mode Enabled
+                </p>
+            {% endif %}
+
+            <form method="POST" action="/set_type">
+
+                <select name="type">
+                    <option value="Normal">Normal</option>
+                    <option value="Deuteranopia">Deuteranopia</option>
+                    <option value="Protanopia">Protanopia</option>
+                    <option value="Tritanopia">Tritanopia</option>
+                </select>
+
+                <button type="submit">Save</button>
+
+            </form>
+
+            <br>
+
+            <a href="/test" style="color:#38bdf8;">
+                🧪 Take Vision Test
+            </a>
+
+        </div>
+
+        <!-- Upload -->
+        <div class="card">
+
+            <h3>📷 Upload Image</h3>
+
+            <form action="/upload"
+                  method="POST"
+                  enctype="multipart/form-data">
+
+                <input type="file"
+                       name="image"
+                       required>
+
+                <button type="submit">
+                    Upload & Detect
+                </button>
+
+            </form>
+
+            {% if image %}
+                <img src="{{ image }}">
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <!-- Live Camera -->
+    <div class="card full">
+
+        <h3>🎥 Live Camera AI Detection</h3>
+
+        <button onclick="startLiveDetection()">
+            ▶ Start Live Detection
+        </button>
+
+        <button onclick="stopLiveDetection()">
+            ⛔ Stop Live Detection
+        </button>
+
+        <br><br>
+
+        <div id="cameraBox">
+
+            <video id="video"
+                   width="700"
+                   height="500"
+                   autoplay
+                   playsinline>
+            </video>
+
+            <canvas id="overlay"
+                    width="700"
+                    height="500">
+            </canvas>
+
+            <canvas id="canvas"
+                    style="display:none;">
+            </canvas>
+
+        </div>
+
+    </div>
+
+    <!-- Result -->
+    <div class="card full">
+
+        <h3>🎯 Detection Result</h3>
+
+        <div class="result"
+             id="resultText">
+
+            {{ result if result else "No result yet" }}
+
+        </div>
+
+        <button onclick="speakResult()">
+            🔊 Speak Result
+        </button>
+<button onclick="toggleLargeText()">
+    🔠 Large Text Mode
+</button>
+    </div>
+    <!-- HISTORY -->
+    <div class="card full">
+
+        <h3>📜 Detection History</h3>
+
+        {% if history %}
+
+        <table>
+
+            <tr>
+                <th>Color</th>
+                <th>Time</th>
+                <th>Vision Type</th>
+            </tr>
+
+            {% for item in history %}
+
+            <tr>
+                <td>{{ item["Color"] }}</td>
+                <td>{{ item["Time"] }}</td>
+                <td>{{ item["Vision Type"] }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+        {% else %}
+
+        <p>No history available</p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- CAMERA SCRIPT -->
+</div>
+
+<!-- CAMERA SCRIPT -->
+<script>
+
+let stream = null;
+let liveInterval = null;
+
+function startLiveDetection(){
+
+    navigator.mediaDevices.getUserMedia({video:true})
+
+    .then(s=>{
+
+        stream=s;
+
+        document.getElementById("video").srcObject=stream;
+
+        liveInterval=setInterval(()=>{
+
+            captureImage();
+
+        },3000);
+
+    })
+
+    .catch(err=>{
+
+        alert("Camera not working");
+
+        console.log(err);
+
+    });
+}
+
+function stopLiveDetection(){
+
+    if(liveInterval){
+
+        clearInterval(liveInterval);
+
+        liveInterval=null;
+    }
+
+    if(stream){
+
+        stream.getTracks().forEach(track=>track.stop());
+
+        document.getElementById("video").srcObject=null;
+    }
+}
+
+function captureImage(){
+
+    const video=document.getElementById("video");
+
+    const canvas=document.getElementById("canvas");
+
+    if(!video.srcObject){
+        return;
+    }
+
+    canvas.width=700;
+    canvas.height=500;
+
+    const ctx=canvas.getContext("2d");
+
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+    const imageData=canvas.toDataURL("image/jpeg",0.6);
+
+    fetch("/camera_upload",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            image:imageData
+        })
+
+    })
+
+    .then(res=>res.json())
+
+    .then(data=>{
+
+        document.getElementById("resultText").innerText=data.result;
+
+        const overlay=document.getElementById("overlay");
+
+        const octx=overlay.getContext("2d");
+
+        octx.clearRect(0,0,overlay.width,overlay.height);
+
+        octx.lineWidth=4;
+
+        octx.strokeStyle="#00ff00";
+
+        octx.strokeRect(180,100,300,250);
+
+        octx.fillStyle="#00ff00";
+
+        octx.fillRect(180,60,350,35);
+
+        octx.fillStyle="black";
+
+        octx.font="18px Arial";
+
+        octx.fillText(data.result,190,85);
+
+    })
+
+    .catch(err=>{
+
+        console.log(err);
+
+    });
+}
+
+</script>
+
+<!-- VOICE -->
+<script>
+
+function speakResult(){
+
+    const element=document.getElementById("resultText");
+
+    if(!element) return;
+
+    let text=element.innerText.trim();
+
+    if(!text || text==="No result yet") return;
+
+    const speech=new SpeechSynthesisUtterance(text);
+
+    speech.lang="en-US";
+
+    speech.rate=1;
+
+    speech.pitch=1;
+
+    window.speechSynthesis.cancel();
+
+    window.speechSynthesis.speak(speech);
+}
+
+</script>
+<script>
+
+function toggleLargeText(){
+
+    document.body.classList.toggle("large-text");
+
+}
+
+</script>
+
+</body>
+</html>
